@@ -27,25 +27,7 @@ var getGitHubProfile = function(user, callback) {
   });
 };
 
-var getGitHubProfileAsync = function(user) {
-  return new Promise(function(resolve, reject) {
-    var options = {
-      url: 'https://api.github.com/users/' + user,
-      headers: { 'User-Agent': 'request' },
-      json: true  // will JSON.parse(body) for us
-    };
-
-    request.get(options, function(err, res, body) {
-      if (err) {
-        reject(err);
-      } else if (body.message) {
-        reject(new Error('Failed to get GitHub profile: ' + body.message));
-      } else {
-        resolve(body);
-      }
-    });
-  });
-};
+var getGitHubProfileAsync = Promise.promisify(getGitHubProfile);
 
 
 // (2) Asynchronous token generation
@@ -56,17 +38,7 @@ var generateRandomToken = function(callback) {
   });
 };
 
-var generateRandomTokenAsync = function() {
-  return new Promise(function(resolve, reject) {
-    crypto.randomBytes(20, function(err, buffer) {
-      if (err) {
-        reject(err);
-      } else {
-        resolve(buffer.toString('hex'));
-      }
-    });
-  });
-};
+var generateRandomTokenAsync = Promise.promisify(generateRandomToken);
 
 
 // (3) Asynchronous file manipulation
