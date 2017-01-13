@@ -39,7 +39,7 @@ var getGitHubProfileAsync = function(user) {
       if (err) {
         reject(err);
       } else if (body.message) {
-        reject(new Error('Failed to get GitHub profile: ' + body.message), null);
+        reject(new Error('Failed to get GitHub profile: ' + body.message));
       } else {
         resolve(body);
       }
