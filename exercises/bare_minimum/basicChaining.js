@@ -12,62 +12,42 @@ var fs = require('fs');
 var Promise = require('bluebird');
 var request = require('request');
 
+Promise.promisifyAll(fs);
 
 var fetchProfileAndWriteToFile = function(readFilePath, writeFilePath) {
   return new Promise(function(resolve, reject) {
-    fs.readFile(readFilePath, function(err, username) {
-      if (err) {
-        reject(err);
-      } else {
-        username = username.toString().split('\n')[0];
-        resolve(username);
-      }
+    fs.readFileAsync(readFilePath, function(err, data) {
+      // if (err) {
+      //   reject(err);
+      // } else {
+      //   data = data.toString().split('\n')[0];
+      //   resolve(data);
+      // }
+    })
+    .then(function(data) {
+      var options = {
+        url: 'https://api.github.com/users/' + data.toString().split('\n')[0],
+        headers: { 'User-Agent': 'request' },
+        json: true  // will JSON.parse(body) for us
+      };
+      request.get(options, function(err, res, body) {
+        if (err) {
+          console.log(err);
+        } else if (body.message) {
+          console.log('Failed to get GitHub profile: ' + body.message);
+        } else {
+          return (body);
+        }
+      });
+    })
+    .then(function(body) {
+      fs.writeFileAsync(writeFilePath, body);
+    })
+    .catch(function(err) {
+      console.log(err);
     });
   });
 };
-
-fetchProfileAndWriteToFile('./test/files/github_handle.txt', './test/files/file_to_write_to.txt')
-.then(function(username) {
-  return new Promise(function(resolve, reject) {
-    var options = {
-      url: 'https://api.github.com/users/' + username,
-      headers: { 'User-Agent': 'request' },
-      json: true  // will JSON.parse(body) for us
-    };
-
-    request.get(options, function(err, res, body) {
-      if (err) {
-        reject(err);
-      } else if (body.message) {
-        reject(new Error('Failed to get GitHub profile: ' + body.message));
-      } else {
-        resolve(body);
-      }
-    });
-  });
-})
-.catch(function(err) {
-  console.log('error getting data', err);
-})
-.then(function(body) {
-  return new Promise(function(resolve, reject) {
-    fs.writeFile('./test/files/file_to_write_to.txt', body, function(err) {
-      if (err) {
-        reject(err);
-      } else {
-        resolve();
-      }
-    });
-  });
-})
-.catch(function(err) {
-  console.log('error getting data', err);
-})
-.then(function() {
-  console.log('yay');
-}, function() {
-  console.log('wee');
-});
 
 // Export these functions so we can test them
 module.exports = {
